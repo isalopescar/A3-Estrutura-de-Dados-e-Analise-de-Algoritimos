@@ -11,7 +11,7 @@ const TOKEN_TYPES = {
 // Operadores permitidos
 const OPERATORS = new Set(["+", "-", "*", "/", "^"]);
 
-// Funçõe unárias permitidas
+// Funções unárias permitidas
 const FUNCTIONS = new Set(["sqrt", "conj", "abs", "arg"])
 
 function tokenize(input) {

@@ -1,5 +1,9 @@
+const { Complexo } = require('./complexo');
+const { tokenize, TOKEN_TYPES, FUNCTIONS } = require('./tokenizer');
+
 class ASTNode {
-    toLisp() { throw new Error("Method 'toLisp()' must be implemented."); }
+    toLisp() { throw new Error("Método 'toLisp()' deve ser implementado."); }
+    avaliar(env) { throw new Error("Método 'avaliar(env)' deve ser implementado.")}
 }
 
 class NumberNode extends ASTNode {
@@ -8,6 +12,9 @@ class NumberNode extends ASTNode {
         this.value = parseFloat(value);
     }
     toLisp() { return this.value.toString(); }
+    avaliar(env) {
+        return new Complexo(this.value, 0);
+    }
 }
 
 class VariableNode extends ASTNode {
@@ -16,6 +23,15 @@ class VariableNode extends ASTNode {
         this.name = name;
     }
     toLisp() { return this.name; }
+    avaliar(env) {
+        if (this.name.toLowerCase() === 'i') {
+            return new Complexo(0,1);
+        }
+        if (!(this.name in env)) {
+            throw new Error(`Variável não definida: ${this.name}`);
+        }
+        return env[this.name];
+    }
 }
 
 class BinaryOp extends ASTNode {
@@ -26,6 +42,21 @@ class BinaryOp extends ASTNode {
         this.right = right;
     }
     toLisp() { return `(${this.op} ${this.left.toLisp()} ${this.right.toLisp()})`; }
+    avaliar(env) {
+        const left = this.left.avaliar(env);
+        const right = this.right.avaliar(env);
+        switch (this.op) {
+            case "+": return left.add(right);
+            case "-": return left.sub(right);
+            case "*": return left.mul(right);
+            case "/": return left.div(right);
+            case "^": if (right.imag !== 0) {
+                throw new Error("Erro de avaliação: Expoentes complexos não são suportados para potenciação.");
+            }
+            return left.pow(right.real);
+            default: throw new Error(`Operador binário não suportado: ${this.op}`);
+        }
+    }
 }
 
 class UnaryOp extends ASTNode {
@@ -37,6 +68,17 @@ class UnaryOp extends ASTNode {
     toLisp() {
         const displayOp = this.op === '~' ? '-' : this.op;
         return `(${displayOp} ${this.operand.toLisp()})`;
+    }
+    avaliar(env) {
+        const operand = this.operand.avaliar(env);
+        switch (this.op) {
+            case "~": return new Complexo(-operand.real, -operand.imag);
+            case "conj": return operand.conjugado();
+            case "sqrt": return operand.sqrt();
+            case "abs": return operand.abs();
+            case "arg": return operand.arg();
+            default: throw new Error(`Operador unário não suportado: ${this.op}`);
+        }
     }
 }
 
@@ -50,72 +92,106 @@ class Parser {
         };
     }
 
-    tokenize(expression) {
-        const regex = /[a-zA-Z_][a-zA-Z0-9_]*|\d+(\.\d+)?|[+\-*/^()]|\S/g;
-        return expression.match(regex) || [];
-    }
-
     shuntingYard(tokens) {
-        const outputQueue = [];
-        const operatorStack = [];
-        let prevToken = null;
+    // Pré-processamento: Inserção do '*' implícito
+    const processedTokens = [];
+    const IMPLICIT_MULT_TOKENS = [TOKEN_TYPES.NUMBER, TOKEN_TYPES.VARIABLE, TOKEN_TYPES.IMAG, TOKEN_TYPES.RPAREN];
+    const IMPLICIT_MULT_NEXT_TOKENS = [TOKEN_TYPES.NUMBER, TOKEN_TYPES.VARIABLE, TOKEN_TYPES.IMAG, TOKEN_TYPES.FUNCTION, TOKEN_TYPES.LPAREN];
 
-        for (let token of tokens) {
-            if (!isNaN(parseFloat(token))) {
-                outputQueue.push(new NumberNode(token));
-            } 
-            else if (/^[a-zA-Z_]/.test(token)) {
-                if (['sqrt', 'conj'].includes(token)) {
-                    operatorStack.push(token);
-                } else {
-                    outputQueue.push(new VariableNode(token));
-                }
-            }
-            else if (token === '(') {
-                operatorStack.push(token);
-            } 
-            else if (token === ')') {
-                while (operatorStack.length && operatorStack[operatorStack.length - 1] !== '(') {
-                    this.popOpToQueue(operatorStack, outputQueue);
-                }
-                operatorStack.pop();
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        const prevToken = i > 0 ? tokens[i - 1] : null;
+
+        if (prevToken && IMPLICIT_MULT_TOKENS.includes(prevToken.type) && IMPLICIT_MULT_NEXT_TOKENS.includes(token.type)) {
+            
+            if (token.type === TOKEN_TYPES.LPAREN && prevToken.type === TOKEN_TYPES.FUNCTION) {
                 
-                if (operatorStack.length && ['sqrt', 'conj'].includes(operatorStack[operatorStack.length - 1])) {
-                    this.popOpToQueue(operatorStack, outputQueue);
-                }
-            } 
-            else if (['+', '-', '*', '/', '^'].includes(token)) {
-                let currOp = token;
-
-                if (currOp === '-' && (prevToken === null || ['+', '-', '*', '/', '^', '(', 'sqrt', 'conj'].includes(prevToken))) {
-                    currOp = '~';
-                }
-
-                while (operatorStack.length > 0) {
-                    const top = operatorStack[operatorStack.length - 1];
-                    if (top === '(') break;
-
-                    const currPrec = this.precedence[currOp];
-                    const topPrec = this.precedence[top] || 0;
-                    const rightAssoc = ['^', '~', 'sqrt', 'conj'].includes(currOp);
-
-                    if ((!rightAssoc && currPrec <= topPrec) || (rightAssoc && currPrec < topPrec)) {
-                        this.popOpToQueue(operatorStack, outputQueue);
-                    } else {
-                        break;
-                    }
-                }
-                operatorStack.push(currOp);
+            } else {
+                processedTokens.push({ type: TOKEN_TYPES.OPERATOR, value: '*' });
             }
-            prevToken = token;
         }
-
-        while (operatorStack.length) {
-            this.popOpToQueue(operatorStack, outputQueue);
-        }
-
-        return outputQueue;
+        processedTokens.push(token);
     }
+    
+    // Algoritmo Shunting Yard
+    const outputQueue = [];
+    const operatorStack = [];
+    let prevToken = null;
+
+    for (let token of processedTokens) {
+        const type = token.type;
+        const value = token.value;
+
+        if (type === TOKEN_TYPES.NUMBER || type === TOKEN_TYPES.VARIABLE || type === TOKEN_TYPES.IMAG) {
+            outputQueue.push(new (type === TOKEN_TYPES.NUMBER ? NumberNode : VariableNode)(value));
+        } 
+        
+        else if (type === TOKEN_TYPES.FUNCTION) {
+            operatorStack.push(value); 
+        } 
+        
+        else if (type === TOKEN_TYPES.LPAREN) {
+            operatorStack.push(value); 
+        } 
+        
+        else if (type === TOKEN_TYPES.RPAREN) {
+            while (operatorStack.length && operatorStack[operatorStack.length - 1] !== '(') {
+                this.popOpToQueue(operatorStack, outputQueue);
+            }
+            
+            if (operatorStack.length === 0) {
+                throw new Error("Erro de Sintaxe: Parêntese de fechamento não correspondido.");
+            }
+            
+            operatorStack.pop(); 
+            
+            if (operatorStack.length && FUNCTIONS.has(operatorStack[operatorStack.length - 1])) {
+                this.popOpToQueue(operatorStack, outputQueue);
+            }
+        } 
+        
+        else if (type === TOKEN_TYPES.OPERATOR) {
+            let currOp = value;
+
+            const isUnary = currOp === '-' && (!prevToken || prevToken.type === TOKEN_TYPES.OPERATOR || prevToken.type === TOKEN_TYPES.LPAREN || prevToken.type === TOKEN_TYPES.FUNCTION);
+            
+            if (isUnary) {
+                currOp = '~';
+            }
+
+            while (operatorStack.length > 0) {
+                const top = operatorStack[operatorStack.length - 1];
+                if (top === '(') break;
+
+                const isTopFunction = FUNCTIONS.has(top); 
+                
+                const currPrec = this.precedence[currOp];
+                const topPrec = isTopFunction ? 5 : (this.precedence[top] || 0);
+                const rightAssoc = ['^', '~', ...FUNCTIONS].includes(currOp);
+
+                if ((!rightAssoc && currPrec <= topPrec) || (rightAssoc && currPrec < topPrec)) {
+                    this.popOpToQueue(operatorStack, outputQueue);
+                } else {
+                    break;
+                }
+            }
+            operatorStack.push(currOp);
+        }
+        
+        prevToken = token;
+    }
+
+    // Move os operadores restantes
+    while (operatorStack.length) {
+         const op = operatorStack[operatorStack.length - 1];
+         if (op === '(') {
+             throw new Error("Erro de Sintaxe: Parêntese de abertura não correspondido.");
+         }
+         this.popOpToQueue(operatorStack, outputQueue);
+    }
+
+    return outputQueue;
+}
 
     popOpToQueue(stack, queue) {
         queue.push(stack.pop());
@@ -149,7 +225,7 @@ class Parser {
     }
 
     parse(expression) {
-        const tokens = this.tokenize(expression);
+        const tokens = tokenize(expression);
         const rpn = this.shuntingYard(tokens);
         return this.rpnToAST(rpn);
     }
