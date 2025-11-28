@@ -10,30 +10,29 @@
 const readline = require("readline");
 const path = require("path");
 const { Complexo } = require("./complexo");
-const { evaluate } = require("./evaluator");
 
 // carrega o parser do grupo
-let parser;
+let parserModule;
 try {
-    parser = require(path.join(process.cwd(), "parser"));
+    parserModule = require(path.join(process.cwd(), "parser"));
 } catch {
     console.log("Erro: parser não encontrado no diretório do projeto.");
     process.exit(1);
 }
 
+const parser = new parserModule.Parser();
+
 // identifica variáveis presentes na expressão
 function coletarVariaveis(node, conjunto = new Set()) {
     if (!node) return conjunto;
 
-    if (node.type === "Identifier") {
+    if (node.constructor.name === "VariableNode" && node.name.toLowerCase() !== 'i') {
         conjunto.add(node.name);
-    } else if (node.type === "BinaryExpression") {
+    } else if (node.constructor.name === "BinaryOp") {
         coletarVariaveis(node.left, conjunto);
         coletarVariaveis(node.right, conjunto);
-    } else if (node.type === "UnaryExpression") {
-        coletarVariaveis(node.argument, conjunto);
-    } else if (node.type === "CallExpression") {
-        node.arguments.forEach(arg => coletarVariaveis(arg, conjunto));
+    } else if (node.constructor.name === "UnaryOp") {
+        coletarVariaveis(node.operand, conjunto);
     }
 
     return conjunto;
@@ -55,13 +54,13 @@ try {
 }
 
 // mostra LISP
-console.log("LISP:", parser.toLisp(ast));
+console.log("LISP:", ast.toLisp());
 
 // descobre variáveis
 const vars = [...coletarVariaveis(ast)];
 
 if (vars.length === 0) {
-    const resultado = evaluate(ast, {});
+    const resultado = ast.avaliar({});
     console.log("Resultado:", resultado.toString());
     process.exit(0);
 }
@@ -78,7 +77,7 @@ let index = 0;
 function perguntar() {
     if (index >= vars.length) {
         rl.close();
-        const resposta = evaluate(ast, env);
+        const resposta = ast.avaliar(env);
         console.log("Resultado:", resposta.toString());
         return;
     }
