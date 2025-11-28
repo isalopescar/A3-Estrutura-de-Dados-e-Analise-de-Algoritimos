@@ -5,10 +5,14 @@ const TOKEN_TYPES = {
     OPERATOR: "OPERATOR",
     LPAREN: "LPAREN",
     RPAREN: "RPAREN",
+    FUNCTION: "FUNCTION"
 };
 
 // Operadores permitidos
 const OPERATORS = new Set(["+", "-", "*", "/", "^"]);
+
+// Funçõe unárias permitidas
+const FUNCTIONS = new Set(["sqrt", "conj", "abs", "arg"])
 
 function tokenize(input) {
     const tokens = [];
@@ -44,12 +48,18 @@ function tokenize(input) {
 
         // Variáveis (ex.: x, a, b, z)
         if (/[a-zA-Z]/.test(char)) {
-            if (char === "i") {
-                tokens.push({ type: TOKEN_TYPES.IMAG, value: "i" });
-            } else {
-                tokens.push({ type: TOKEN_TYPES.VARIABLE, value: char });
+            let start = i;
+            while (i < input.length && /[a-zA-Z0-9_]/.test(input[i])) {
+                i++
             }
-            i++;
+            const indentifier = input.slice(start, i);
+            if (identifier === "i") {
+                tokens.push({ type: TOKEN_TYPES.IMAG, value: "i" });
+            } else if (FUNCTIONS.has(identifier)) {
+                tokens.push({ type: TOKEN_TYPES.FUNCTION, value: identifier })
+            } else {
+                tokens.push({ type: TOKEN_TYPES.VARIABLE, value: identifier });
+            }
             continue;
         }
 
@@ -67,6 +77,21 @@ function tokenize(input) {
                 i++;
             }
 
+            // lógica para notação científica
+                let charAposNum = input[i] ? input[i].toLowerCase() : null;
+                if (charAposNum === 'e') {
+                    i++
+                    if (input[i] === '+' || input[i] === '-') {
+                        i++
+                    }
+                    let startExp = i;
+                    while (i < input.length && /[0-9]/.test(input[i])) {
+                    i++
+                    }
+                    if (i === startExp) {
+                        throw new Error(`Erro: Exponente inválido na notção científica`);
+                    }
+                }
             tokens.push({
                 type: TOKEN_TYPES.NUMBER,
                 value: input.slice(start, i)
