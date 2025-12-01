@@ -1,0 +1,205 @@
+Input:
+node src/cli/Index.js "1 + 2i - (3 + i)"
+    Output esperado:
+    LISP: (- (+ 1 (* 2 i)) (+ 3 i))
+    Resultado: -2 + i
+        Output:
+        LISP: (- (+ 1 (* 2 i)) (+ 3 i))
+        Resultado: -2 + i
+
+Input:
+node src/cli/Index.js "5i * (2 - 3i)"
+    Output esperado:
+    LISP: (* (* 5 i) (- 2 (* 3 i)))
+    Resultado: 15 + 10i
+        Output:
+        LISP: (* (* 5 i) (- 2 (* 3 i)))
+        Resultado: 15 + 10i
+
+Input:
+node src/cli/Index.js "(10 + 5i) / 2"
+    Output esperado:
+    LISP: (/ (+ 10 (* 5 i)) 2)
+    Resultado: 5 + 2.5i
+        Output:
+        LISP: (/ (+ 10 (* 5 i)) 2)
+        Resultado: 5 + 2.5i
+
+Input:
+node src/cli/Index.js "i^4 + i^3 + i^2 + i"
+    Output esperado:
+    LISP: (+ (+ (+ (^ i 4) (^ i 3)) (^ i 2)) i)
+    Resultado: -2.220446049250313e-16
+        Output:
+        LISP: (+ (+ (+ (^ i 4) (^ i 3)) (^ i 2)) i)
+        Resultado: -2.220446049250313e-16
+
+Input:
+node src/cli/Index.js "3 + 4 * 2i"
+    Output esperado:
+    LISP: (+ 3 (* (* 4 2) i))
+    Resultado: 3 + 8i
+        Output:
+        LISP: (+ 3 (* (* 4 2) i))
+        Resultado: 3 + 8i
+
+Input:
+node src/cli/Index.js "3 ^ 2 * 2"
+    Output esperado:
+    LISP: (* (^ 3 2) 2)
+    Resultado: 18
+        Output:
+        LISP: (* (^ 3 2) 2)
+        Resultado: 18
+
+Input:
+node src/cli/Index.js "(2 - i) ^ 2"
+    Output esperado:
+    LISP: (^ (- 2 i) 2)
+    Resultado: 3.000000000000001 - 4i
+        Output:
+        LISP: (^ (- 2 i) 2)
+        Resultado: 3.000000000000001 - 4i
+
+Input:
+node src/cli/Index.js "conj(5 - 2i) * i"
+    Output esperado:
+    LISP: (* (conj (- 5 (* 2 i))) i)
+    Resultado: -2 + 5i
+        Output:
+        LISP: (* (conj (- 5 (* 2 i))) i)
+        Resultado: -2 + 5i
+
+Input:
+node src/cli/Index.js "abs(3 + 4i)"
+    Output esperado:
+    LISP: (abs (+ 3 (* 4 i)))
+    Resultado: 5
+        Output:
+        LISP: (abs (+ 3 (* 4 i)))
+        Resultado: 5
+
+Input:
+node src/cli/Index.js "sqrt(i)"
+    Output esperado:
+    LISP: (sqrt i)
+    Resultado: 0.7071067811865476 + 0.7071067811865475i
+        Output:
+        LISP: (sqrt i)
+        Resultado: 0.7071067811865476 + 0.7071067811865475i
+
+Input:
+node src/cli/Index.js "2(1 + i)"
+    Output esperado:
+    LISP: (* 2 (+ 1 i))
+    Resultado: 2 + 2i
+        Output:
+        LISP: (* 2 (+ 1 i))
+        Resultado: 2 + 2i
+
+Input:
+node src/cli/Index.js "(1+i)i"
+    Output esperado:
+    LISP: (* (+ 1 i) i)
+    Resultado: -1 + i
+        Output:
+        LISP: (* (+ 1 i) i)
+        Resultado: -1 + i
+
+Input:
+node src/cli/Index.js "3A"
+    Output esperado:
+    LISP: (* 3 A)
+    Valor para A (ex: 3, -1.5, 1+2i, -i): (Se digitar 2+i)
+    Resultado: 6 + 3i
+        Output:
+        LISP: (* 3 A)
+        Valor para A (ex: 3, -1.5, 1+2i, -i): 2+i
+        Resultado: 6 + 3i
+
+Input:
+node src/cli/Index.js "A + 5"
+    Output esperado:
+    LISP: (+ A 5)
+    Valor para A (ex: 3, -1.5, 1+2i, -i): (Se digitar 1 - i)
+    Resultado: 6 - i
+        Output:
+        LISP: (+ A 5)
+        Valor para A (ex: 3, -1.5, 1+2i, -i): 1 - i
+        Resultado: 6 - i
+
+Input:
+node src/cli/Index.js "B ^ 2"
+    Output esperado:
+    LISP: (^ B 2)
+    Valor para B (ex: 3, -1.5, 1+2i, -i): (Se digitar 3i)
+    Resultado: -9 + 1.102182119232618e-15i
+        Output:
+        LISP: (^ B 2)
+        Valor para B (ex: 3, -1.5, 1+2i, -i): 3i
+        Resultado: -9 + 1.102182119232618e-15i
+
+Input:
+node src/cli/Index.js "conj(C) * A"
+    Output esperado:
+    LISP: (* (conj C) A)
+    Valor para C (ex: 3, -1.5, 1+2i, -i): (Se digitar 2+i)
+    Valor para A (ex: 3, -1.5, 1+2i, -i): (Se digitar 1-i)
+    Resultado: 1 - 3i
+        Output:
+        LISP: (* (conj C) A)
+        Valor para C (ex: 3, -1.5, 1+2i, -i): 2+i
+        Valor para A (ex: 3, -1.5, 1+2i, -i): 1-i
+        Resultado: 1 - 3i
+
+Input:
+node src/cli/Index.js "3 ** 2"
+    Output esperado:
+    Erro ao interpretar expressão (Sintaxe): Erro de Sintaxe: Inesperado *
+        Output:
+        Erro ao interpretar expressão (Sintaxe): Erro de Sintaxe: Inesperado *
+
+Input:
+node src/cli/Index.js "2 + (3"
+    Output esperado:
+    Erro ao interpretar expressão (Sintaxe): Erro de Sintaxe: Esperado RPAREN, encontrado EOF
+        Output:
+        Erro ao interpretar expressão (Sintaxe): Erro de Sintaxe: Esperado RPAREN, encontrado EOF
+
+Input:
+node src/cli/Index.js "conj(3 + 4)"
+    Output esperado:
+    LISP: (conj (+ 3 4))
+    Resultado: 7
+        Output:
+        LISP: (conj (+ 3 4))
+        Resultado: 7
+
+Input:
+node src/cli/Index.js "1 / (3 - 3)"
+    Output esperado:
+    LISP: (/ 1 (- 3 3))
+    Erro ao avaliar expressão: Divisão por zero
+        Output:
+        LISP: (/ 1 (- 3 3))
+        Erro ao avaliar expressão: Divisão por zero
+
+Input:
+node src/cli/Index.js "X + 1"
+    Output esperado:
+    LISP: (+ X 1)
+    Valor para X (ex: 3, -1.5, 1+2i, -i): (Se digitar 0)
+    Resultado: 1
+        Output:
+        LISP: (+ X 1)
+        Valor para X (ex: 3, -1.5, 1+2i, -i): 0
+        Resultado: 1
+
+Input:
+node src/cli/Index.js "2 ^ i"
+    Output esperado:
+    LISP: (^ 2 i)
+    Erro ao avaliar expressão: Erro de avaliação: Expoentes complexos não são suportados para potenciação.
+        Output:
+        LISP: (^ 2 i)
+        Erro ao avaliar expressão: Erro de avaliação: Expoentes complexos não são suportados para potenciação.
