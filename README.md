@@ -28,7 +28,7 @@ Diferente de calculadoras comuns, este projeto implementa uma arquitetura de com
 
 ## Pré-requisitos
 
-Antes de iniciar, certifique-se que possui o `Node.js` instalado.:
+Antes de iniciar, certifique-se que possui o `Node.js` instalado.
 
 ## Execução do Projeto
 
